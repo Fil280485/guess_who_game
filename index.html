@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess Who? Web Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .character-img {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .character-img.selected {
+            border-color: #0066ff;
+            border-width: 3px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        select, button {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.exit {
+            background-color: #f44336;
+        }
+        button.exit:hover {
+            background-color: #d32f2f;
+        }
+        .history {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history h3 {
+            margin-top: 0;
+        }
+        .history-entry {
+            margin-bottom: 5px;
+        }
+        .history-entry.yes {
+            color: green;
+        }
+        .history-entry.no {
+            color: red;
+        }
+        .history-entry.info {
+            color: blue;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Guess Who? Web Version</h1>
+        
+        <div class="images-grid" id="images-container">
+            <!-- Character images will be inserted here -->
+        </div>
+        
+        <div class="controls">
+            <select id="question-select">
+                <option value="">Select a question</option>
+                <!-- Questions will be inserted here -->
+            </select>
+            
+            <div class="button-row">
+                <button id="confirm-question">Confirm Question</button>
+                <button id="confirm-guess">Confirm Selection</button>
+                <button id="clear-selection">Clear Selection</button>
+            </div>
+            
+            <div class="button-row">
+                <button class="trial-btn" data-trial="1">Trial 1</button>
+                <button class="trial-btn" data-trial="2">Trial 2</button>
+                <button class="trial-btn" data-trial="3">Trial 3</button>
+                <button class="trial-btn" data-trial="4">Trial 4</button>
+            </div>
+            
+            <button class="exit" id="exit-save">Exit & Save</button>
+        </div>
+        
+        <div class="history">
+            <h3>Question History:</h3>
+            <div id="history-content">
+                <!-- History entries will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Character data
+        const characters = [ {
+          "name": "915.jpg", 
+          "gender": "female", 
+          "race": "black", 
+          "background_color": "red",
+          "hair_color": "black_hair",
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses",
+          "smiling":"closed_mouth",
+          "hair_length":"short_hair",
+          "wearing_hat":"no_hat",
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace",
+          "hair_color_light":"no_light",
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings",
+          "have_moustache":"no_moustache",
+          "have_beard":"no_beard",
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery",
+          "hair_up":"yes_hair_up",
+          "have_dimples":"no_dimples",
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"         },
+          
+     {    "name": "913.jpg",
+          "gender": "female",
+          "race": "black",
+          "background_color": "red",
+          "hair_color": "black_hair",
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses",
+          "smiling":"showing_teeth",
+          "hair_length":"long_hair",
+          "wearing_hat":"no_hat",
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket",
+          "wearing_necklace":"no_necklace",
+          "hair_color_light":"no_light",
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"yes_earrings",
+          "have_moustache":"no_moustache",
+          "have_beard":"no_beard",
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery",
+          "hair_up":"no_hair_up",
+          "have_dimples":"yes_dimples",
+          "hair_down":"yes_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"     },
+    
+     {    "name": "912.jpg",
+          "gender": "female",
+          "race": "black",
+          "background_color": "blue",
+          "hair_color": "black_hair",
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses",
+          "smiling":"showing_teeth",
+          "hair_length":"short_hair",
+          "wearing_hat":"no_hat",
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket",
+          "wearing_necklace":"yes_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"yes_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"      },
+    
+     {    "name": "909.jpg", 
+          "gender": "female", 
+          "race": "black", 
+          "background_color": "blue", 
+          "hair_color": "black_hair",  
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses",
+          "smiling":"neutral_expression",
+          "hair_length":"long_hair",
+          "wearing_hat":"no_hat",
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket",
+          "wearing_necklace":"yes_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"yes_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"yes_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"       },
+    
+    {     "name": "903.jpg", 
+          "gender": "male",  
+          "race": "black", 
+          "background_color": "blue", 
+          "hair_color": "black_hair",  
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_yes",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"yes_moustache", 
+          "have_beard":"yes_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"      },
+    
+    {     "name": "901.jpg", 
+          "gender": "male",  
+          "race": "black", 
+          "background_color": "red",  
+          "hair_color": "black_hair",  
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"closed_mouth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat",
+          "facial_hair":"facial_yes",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"yes_moustache", 
+          "have_beard":"yes_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"       },
+    
+    {     "name": "900.jpg", 
+          "gender": "male",  
+          "race": "black", 
+          "background_color": "red",  
+          "hair_color": "no_hair",     
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"neutral_expression", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_yes",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"yes_earrings", 
+          "have_moustache":"yes_moustache", 
+          "have_beard":"yes_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"yes_casual"       },
+    
+    {     "name": "854.jpg", 
+          "gender": "female", 
+          "race": "white", 
+          "background_color": "red",  
+          "hair_color": "red_hair",    
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket",
+          "wearing_necklace":"yes_necklace", 
+          "hair_color_light":"yes_light", 
+          "hair_color_dark":"no_dark",
+          "wearing_earrings":"yes_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"yes_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"yes_casual"       },
+    
+    {     "name": "853.jpg", 
+          "gender": "female", 
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "blonde_hair", 
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"yes_glasses",    
+          "smiling":"showing_teeth", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"yes_light", 
+          "hair_color_dark":"no_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"yes_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"yes_hair_down",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"no_casual"       },
+    
+    {     "name": "852.jpg", 
+          "gender": "female", 
+          "race": "white", 
+          "background_color": "red", 
+          "hair_color": "black_hair", 
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"yes_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"        },
+    
+    {     "name": "841.jpg", 
+          "gender": "male",  
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "no_hair",     
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"yes_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"yes_moustache", 
+          "have_beard":"yes_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"yes_casual"        },
+    
+    {     "name": "839.jpg", 
+          "gender": "male",  
+          "race": "white", 
+          "background_color": "red",  
+          "hair_color": "brown_hair",  
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"neutral_expression", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"        },
+    
+    {     "name": "835.jpg", 
+          "gender": "female", 
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "blonde_hair", 
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"neutral_expression", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket",
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"yes_light", 
+          "hair_color_dark":"no_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"yes_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"       },
+    
+    {     "name": "827.jpg", 
+          "gender": "male",  
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "brown_hair",  
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"neutral_expression", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"yes_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"no_casual"        },
+    
+    {     "name": "812.jpg", 
+          "gender": "male",  
+          "race": "black", 
+          "background_color": "blue", 
+          "hair_color": "no_hair",     
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"yes_hat", 
+          "facial_hair":"facial_yes",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"yes_casual"        }, 
+    
+    {     "name": "807.jpg", 
+          "gender": "male",  
+          "race": "black", 
+          "background_color": "red",  
+          "hair_color": "no_hair",     
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"yes_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket", 
+          "wearing_necklace":"yes_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"yes_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"yes_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"           }, 
+    
+    {     "name": "788.jpg", 
+          "gender": "male",  
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "brown_hair",  
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"yes_light", 
+          "hair_color_dark":"no_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"yes_casual"          },
+    
+    {     "name": "784.jpg", 
+          "gender": "female", 
+          "race": "white", 
+          "background_color": "red",  
+          "hair_color": "black_hair",  
+          "eye_color": "blue_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"showing_teeth", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"no_hoodie_jacket", 
+          "wearing_necklace":"no_necklace",
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"yes_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"yes_hair_down",
+          "old_appearance":"yes_old",
+          "young_appearance":"no_young",
+          "wearing_casual_clothing":"no_casual"       },
+    
+    {     "name": "781.jpg", 
+          "gender": "female", 
+          "race": "black", 
+          "background_color": "red",  
+          "hair_color": "black_hair",  
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"neutral_expression", 
+          "hair_length":"long_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"dark_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"yes_hair_up", 
+          "have_dimples":"no_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"        },
+    
+    {     "name": "772.jpg", 
+          "gender": "male",  
+          "race": "white", 
+          "background_color": "blue", 
+          "hair_color": "brown_hair",  
+          "eye_color": "brown_eyes",
+          "wearing_glasses":"no_glasses", 
+          "smiling":"closed_mouth", 
+          "hair_length":"short_hair", 
+          "wearing_hat":"no_hat", 
+          "facial_hair":"facial_no",
+          "skin_tone":"light_skin",
+          "wearing_hoodie_jacket":"yes_hoodie_jacket", 
+          "wearing_necklace":"no_necklace", 
+          "hair_color_light":"no_light", 
+          "hair_color_dark":"yes_dark",
+          "wearing_earrings":"no_earrings", 
+          "have_moustache":"no_moustache", 
+          "have_beard":"no_beard", 
+          "business_attire":"no_business_attire",
+          "wearing_jewellery":"no_jewellery", 
+          "hair_up":"no_hair_up", 
+          "have_dimples":"yes_dimples", 
+          "hair_down":"no_hair_down",
+          "old_appearance":"no_old",
+          "young_appearance":"yes_young",
+          "wearing_casual_clothing":"yes_casual"        } 
+        ];
+
+        // Question mapping
+        const QUESTION_MAP = {
+            "Is the person a male?": ["gender", "male"],
+            "Is the person a female?": ["gender", "female"], 
+            "Is the person young/appear young?": ["young_appearance", "yes_young"],
+            "Does the person have long hair?": ["hair_length", "long_hair"],
+            "Does the person have a red background?": ["background_color", "red"],
+            "Is the person smiling with an open mouth/showing teeth?": ["smiling", "showing_teeth"],
+            "Is the person wearing a hat?": ["wearing_hat", "yes_hat"],
+            "Does the person have brown hair?": ["hair_color", "brown_hair"],
+            "Is the person old/appear older?": ["old_appearance", "yes_old"],
+            "Does the person have light skin?": ["skin_tone", "light_skin"],
+            "Does the person have brown eyes?": ["eye_color", "brown_eyes"],
+            "Is the person bald?": ["hair_color", "no_hair"],
+            "Is the person wearing jewellery?": ["wearing_jewellery", "yes_jewellery"],
+            "Does the person have beard?": ["have_beard", "yes_beard"],
+            "Is the person black?": ["race", "black"],
+            "Is the person wearing glasses?": ["wearing_glasses", "yes_glasses"],
+            "Is the person wearing business attire?": ["business_attire", "yes_business_attire"],
+            "Does the person have a blue background?": ["background_color", "blue"],
+            "Does the person have facial hair?": ["facial_hair", "facial_yes"], 
+            "Does the person have blue eyes?": ["eye_color", "blue_eyes"],
+            "Is the person wearing a hoodie/jacket?": ["wearing_hoodie_jacket", "yes_hoodie_jacket"],
+            "Does the person have dimples?": ["have_dimples", "yes_dimples"],
+            "Does the person have dark skin?": ["skin_tone", "dark_skin"],
+            "Does the person have short hair?": ["hair_length", "short_hair"],
+            "Does the person have a neutral expression?": ["smiling", "neutral_expression"],
+            "Does the person have red hair?": ["hair_color", "red_hair"],
+            "Is the person wearing earrings?": ["wearing_earrings", "yes_earrings"],
+            "Is the person white?": ["race", "white"],
+            "Is their hair up (i.e ponytail, bun, etc.)?": ["hair_up", "yes_hair_up"], 
+            "Does the person have dark coloured hair?": ["hair_color_dark", "yes_dark"],
+            "Is the person wearing casual clothing?": ["wearing_casual_clothing", "yes_casual"], 
+            "Does the person have a moustache?": ["have_moustache", "yes_moustache"],
+            "Does the person have blonde hair?": ["hair_color", "blonde_hair"],
+            "Is their hair down?": ["hair_down", "yes_hair_down"],
+            "Is the person smiling with a closed mouth?": ["smiling", "closed_mouth"],
+            "Does the person wearing a necklace?": ["wearing_necklace", "yes_necklace"],
+            "Does the person have light color hair?": ["hair_color_light", "yes_light"],
+            "Does the person have black hair?": ["hair_color", "black_hair"] 
+        };
+
+        class GuessWhoGame {
+            constructor() {
+                this.currentCharacters = [...characters];
+                this.targetCharacter = null;
+                this.selectedCharacter = null;
+                this.selectedQuestions = [];
+                this.highlightedImg = null;
+                this.questions = Object.keys(QUESTION_MAP);
+                
+                // Initialize UI elements
+                this.imagesContainer = document.getElementById('images-container');
+                this.questionSelect = document.getElementById('question-select');
+                this.historyContent = document.getElementById('history-content');
+                
+                // Populate question dropdown
+                this.populateQuestions();
+                
+                // Add event listeners
+                document.getElementById('confirm-question').addEventListener('click', () => this.nextQuestion());
+                document.getElementById('confirm-guess').addEventListener('click', () => this.guessPerson());
+                document.getElementById('clear-selection').addEventListener('click', () => this.clearSelection());
+                document.getElementById('exit-save').addEventListener('click', () => this.exitAndSave());
+                
+                document.querySelectorAll('.trial-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.resetGame(parseInt(e.target.dataset.trial)));
+                });
+                
+                // Start with practice trial
+                this.addToHistory("=== Please choose Trial  ===", "info");
+                this.updateImages();
+            }
+            
+            populateQuestions() {
+                this.questionSelect.innerHTML = '<option value="">Select a question</option>';
+                this.questions.forEach(question => {
+                    const option = document.createElement('option');
+                    option.value = question;
+                    option.textContent = question;
+                    this.questionSelect.appendChild(option);
+                });
+            }
+            
+            updateImages() {
+                this.imagesContainer.innerHTML = '';
+                
+                this.currentCharacters.forEach(character => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'character-wrapper';
+                    
+                    const img = document.createElement('img');
+                    img.src = character.name; // In a real app, this would be a path to your images
+                    img.alt = character.name.replace('.jpg', '');
+                    img.className = 'character-img';
+                    if (this.selectedCharacter && this.selectedCharacter.name === character.name) {
+                        img.classList.add('selected');
+                    }
+                    
+                    img.addEventListener('click', () => this.selectCharacter(character, img));
+                    imgWrapper.appendChild(img);
+                    this.imagesContainer.appendChild(imgWrapper);
+                });
+            }
+            
+            selectCharacter(character, imgElement) {
+                if (this.highlightedImg) {
+                    this.highlightedImg.classList.remove('selected');
+                }
+                
+                this.selectedCharacter = character;
+                this.highlightedImg = imgElement;
+                imgElement.classList.add('selected');
+                
+                // Disable confirm question button when a character is selected
+                document.getElementById('confirm-question').disabled = true;
+                
+                alert(`You selected ${character.name.replace('.jpg', '')}. Please confirm your selection, or clear selection to continue.`);
+            }
+            
+            clearSelection() {
+                if (this.highlightedImg) {
+                    this.highlightedImg.classList.remove('selected');
+                    this.highlightedImg = null;
+                }
+                this.selectedCharacter = null;
+                document.getElementById('confirm-question').disabled = false;
+            }
+            
+            addToHistory(message, type = '') {
+                const entry = document.createElement('div');
+                entry.className = `history-entry ${type}`;
+                entry.textContent = message;
+                this.historyContent.appendChild(entry);
+                this.historyContent.scrollTop = this.historyContent.scrollHeight;
+            }
+            
+            resetGame(trialNumber) {
+                this.currentCharacters = [...characters];
+                
+                // Set target character based on trial number
+                const trialTargets = [5, 13, 19, 2]; // Character indices for trials 1-4
+                this.targetCharacter = characters[trialTargets[trialNumber - 1]];
+                
+                this.clearSelection();
+                this.updateImages();
+                this.addToHistory(`=== Trial ${trialNumber} Started ===`, "info");
+                console.log(`New target character: ${this.targetCharacter.name.replace('.jpg', '')}`);
+            }
+            
+            nextQuestion() {
+                const question = this.questionSelect.value;
+                
+                if (!question) {
+                    alert("Please select a question first!");
+                    return;
+                }
+                
+                if (question in QUESTION_MAP) {
+                    const [attribute, value] = QUESTION_MAP[question];
+                    const targetHasAttribute = (this.targetCharacter[attribute] === value);
+                    
+                    // Filter characters based on the answer
+                    this.filterCharacters(question, targetHasAttribute);
+                    
+                    // Add to history
+                    this.addToHistory(`Q: ${question}`, '');
+                    this.addToHistory(`A: ${targetHasAttribute ? 'Yes' : 'No'}`, targetHasAttribute ? 'yes' : 'no');
+                    
+                    // Update UI
+                    this.updateImages();
+                    
+                    // Check win condition
+                    if (this.currentCharacters.length === 1) {
+                        const winner = this.currentCharacters[0].name === this.targetCharacter.name;
+                        if (winner) {
+                            this.addToHistory("Congratulations! You found the target character!", "info");
+                            alert("Congratulations! You found the target character!");
+                        } else {
+                            this.addToHistory("Game Over! Wrong guess.", "info");
+                            alert("Game Over! Wrong guess.");
+                        }
+                    }
+                    
+                    // Add to selected questions
+                    this.selectedQuestions.push(question);
+                }
+            }
+            
+            filterCharacters(question, keepMatches) {
+                if (question in QUESTION_MAP) {
+                    const [attribute, value] = QUESTION_MAP[question];
+                    if (keepMatches) {
+                        this.currentCharacters = this.currentCharacters.filter(
+                            char => char[attribute] === value
+                        );
+                    } else {
+                        this.currentCharacters = this.currentCharacters.filter(
+                            char => char[attribute] !== value
+                        );
+                    }
+                }
+            }
+            
+            guessPerson() {
+                if (!this.selectedCharacter) {
+                    alert("Please select a character first!");
+                    return;
+                }
+                
+                if (this.selectedCharacter.name === this.targetCharacter.name) {
+                    this.addToHistory("Congratulations! You found the target character!", "info");
+                    alert("Congratulations! You found the target character!");
+                } else {
+                    this.addToHistory("Incorrect guess. Selected character is not the target.", "info");
+                    alert("Incorrect guess. Selected character is not the target.");
+                }
+                
+                this.clearSelection();
+            }
+            
+            exportHistoryToCSV() {
+                try {
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const filename = `game_history_${timestamp}.csv`;
+                    
+                    // Create CSV content
+                    let csvContent = "Game History\n";
+                    const entries = this.historyContent.querySelectorAll('.history-entry');
+                    entries.forEach(entry => {
+                        csvContent += `"${entry.textContent}"\n`;
+                    });
+                    
+                    // Create download link
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.setAttribute('hidden', '');
+                    a.setAttribute('href', url);
+                    a.setAttribute('download', filename);
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    alert(`History saved to ${filename}`);
+                    return true;
+                } catch (e) {
+                    alert(`Failed to save history: ${e}`);
+                    return false;
+                }
+            }
+            
+            exitAndSave() {
+                if (confirm("Do you want to save your game history before exiting?")) {
+                    if (this.exportHistoryToCSV()) {
+                        // In a real web app, you might redirect or close a window
+                        alert("Game saved. You can now close the browser tab.");
+                    } else {
+                        if (confirm("Failed to save history. Exit anyway?")) {
+                            alert("Game exited without saving.");
+                        }
+                    }
+                } else {
+                    alert("Game exited without saving.");
+                }
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.onload = () => {
+            new GuessWhoGame();
+        };
+    </script>
+</body>
+</html>
