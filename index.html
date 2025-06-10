@@ -41,14 +41,11 @@
             padding: 15px;
             background-color: #f5f5f5;
             border-radius: 5px;
-            align-items: center; /* Add this line */
         }
         .button-row {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            justify-content: center; /* Add this line */
-
         }
         select, button {
             padding: 8px 12px;
@@ -97,7 +94,30 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <body>
+    <div id="instructions-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.98);z-index:1000;display:flex;align-items:center;justify-content:center;">
+        <div style="max-width:400px;padding:32px;background:#fff;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,0.1);text-align:center;">
+            <h1>Welcome to Guess Who?</h1>
+            <h2>Instructions</h2>
+            <ol style="text-align: left;margin-bottom: 32px;">
+                <li>Select a trial (1-4) to start a game. See Question History.</li>
+                <br>
+                <li>Choose questions from the dropdown menu to narrow down possibilities.</li>
+                <br>
+                <li>Click <b>Confirm Question</b> to see the answer and filter characters.</li>
+                <br>
+                <li>When you think you know the answer, select a character and click <b>Confirm Selection</b>.</li>
+                <br>
+                <li>Use <b>Clear Selection</b> to undo a character selection if selected (should be highlighted in blue).</li>
+                <br>
+                <li><b>Exit & Save</b> allows saving your game history in your download files.</li>
+            </ol>
+            <button id="start-game-btn" style="margin-top:20px;padding:10px 24px;font-size:16px;">Start Game</button>
+        </div>
+    </div>
+    
+
+    <div class="game-container" style="display:none;">
         <h1>Guess Who? Web Version</h1>
         
         <div class="images-grid" id="images-container">
@@ -964,7 +984,12 @@
                 }
             }
         }
-
+        // ...existing code...
+        document.getElementById('start-game-btn').onclick = function() {
+        document.getElementById('instructions-overlay').style.display = 'none';
+        document.querySelector('.game-container').style.display = '';
+};
+// ...existing code...
         // Initialize the game when the page loads
         window.onload = () => {
             new GuessWhoGame();
