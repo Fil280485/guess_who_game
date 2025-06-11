@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guess Who? Web_app</title>
+    <title>Guess Who?</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -93,6 +93,12 @@
         .history-entry.info {
             color: blue;
             font-weight: bold;
+        }
+                
+        .trial-btn.active-trial {
+            background-color: #0066ff;
+            color: #fff;
+            border: 2px solid #004bb5;
         }
     </style>
 </head>
@@ -857,18 +863,27 @@
                 this.historyContent.scrollTop = this.historyContent.scrollHeight;
             }
             
+            // ...existing code...
             resetGame(trialNumber) {
                 this.currentCharacters = [...characters];
-                
+
                 // Set target character based on trial number
                 const trialTargets = [5, 13, 19, 2]; // Character indices for trials 1-4
                 this.targetCharacter = characters[trialTargets[trialNumber - 1]];
-                
+
                 this.clearSelection();
                 this.updateImages();
                 this.addToHistory(`=== Trial ${trialNumber} Started ===`, "info");
                 console.log(`New target character: ${this.targetCharacter.name.replace('.jpg', '')}`);
+
+                // Highlight the selected trial button
+                document.querySelectorAll('.trial-btn').forEach(btn => {
+                    btn.classList.remove('active-trial');
+                });
+                const activeBtn = document.querySelector(`.trial-btn[data-trial="${trialNumber}"]`);
+                if (activeBtn) activeBtn.classList.add('active-trial');
             }
+            // ...existing code...
             
             nextQuestion() {
                 const question = this.questionSelect.value;
