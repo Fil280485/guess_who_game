@@ -900,7 +900,17 @@
             // ...existing code...
             
             nextQuestion() {
+                if (!this.targetCharacter) {
+                    alert("Please select a trial before starting the game!");
+                    return;
+                }
+
                 const question = this.questionSelect.value;
+                if (!question) {
+                    alert("Please select a question first!");
+                    return;
+                }
+                
                 
                 if (!question) {
                     alert("Please select a question first!");
@@ -954,6 +964,16 @@
             }
             
             guessPerson() {
+                if (!this.targetCharacter) {
+                alert("Please select a trial before starting the game!");
+                return;
+                }
+
+                if (!this.selectedCharacter) {
+                alert("Please select a character first!");
+                return;
+                }
+
                 if (!this.selectedCharacter) {
                     alert("Please select a character first!");
                     return;
