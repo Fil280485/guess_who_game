@@ -857,7 +857,7 @@
                 // Disable confirm question button when a character is selected
                 document.getElementById('confirm-question').disabled = true;
                 
-                alert(`You selected ${character.name.replace('.jpg', '')}. Please confirm your selection, or clear selection to continue.`);
+                alert(`You selected a character. Please confirm your selection, or clear selection to continue.`);
             }
             
             clearSelection() {
@@ -963,8 +963,8 @@
                     this.addToHistory("Congratulations! You found the target character!", "info");
                     alert("Congratulations! You found the target character!");
                 } else {
-                    this.addToHistory("Incorrect guess. Selected character is not the target.", "info");
-                    alert("Incorrect guess. Selected character is not the target.");
+                    this.addToHistory("Incorrect guess. Selected character is not the target person.", "info");
+                    alert("Incorrect guess. Selected character is not the target person.");
                 }
                 
                 this.clearSelection();
