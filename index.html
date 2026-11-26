@@ -1144,7 +1144,7 @@
 
                     // Upload to Power Automate / OneDrive
 
-                    fetch("https://defaultd47b090e3f5a4ca084d09f89d269f1.75.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/13/workflows/5e938649f6354993af74fa37268e719a/triggers/manual/paths/invoke?api-version=1", {
+                    fetch("https://defaultd47b090e3f5a4ca084d09f89d269f1.75.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/13/workflows/5e938649f6354993af74fa37268e719a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=8zPGT84xTvpito0j7EDKW4DcLpqDwXITW5KbtrpTtm0", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
@@ -1154,12 +1154,18 @@
                             csv: csvContent
                         })
                     })
-                    .then(response => {
-                        console.log("History uploaded successfully");
+                    .then(async response => {
+
+                        console.log("Status:", response.status);
+
+                        const text = await response.text();
+
+                        console.log("Response:", text);
+
                     })
                     .catch(error => {
-                        console.error("Upload failed:", error);
-                    });
+                        console.error(error);
+                    }); 
 
                     // Also download local backup
 
